@@ -49,7 +49,15 @@ bot.command("stop", (ctx) => {
 const waitAvailableSlot = async () => {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--disable-gpu',
+      '--no-zygote',
+      '--single-process'
+    ],
   });
 
   const pages = await browser.pages();
