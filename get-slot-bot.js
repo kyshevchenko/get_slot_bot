@@ -48,6 +48,7 @@ bot.command("stop", (ctx) => {
 // Функция для проверки доступности слотов
 const waitAvailableSlot = async () => {
   const browser = await puppeteer.launch({
+    // executablePath: '/snap/bin/chromium',
     headless: true,
     args: [
       '--no-sandbox',
