@@ -2,7 +2,7 @@
 export const getUsersList = (users) =>
   Object.values(users)
     .map((e) => `${e.tag}`)
-    .join(", ") ?? "пуст";
+    .join(', ') ?? 'пуст';
 
 // let workDaysCount = 0;
 
@@ -10,21 +10,23 @@ export const getUsersList = (users) =>
 export const getWorkDaysCount = (startDate) =>
   Math.floor((new Date() - startDate) / (24 * 60 * 60 * 1000)); // Разницу дат в милисекундах делим на количество миллисекунд в одном дне
 
-// Функция - ежедневный чек работы бота в 11 часов
-// const checkAvailabilityBotTime = () => {
-//   const currentDate = new Date();
-//   const startCheckPeriodTime = new Date(currentDate);
-//   startCheckPeriodTime.setHours(11, 0, 0, 0);
-//   const endCheckPeriodTime = new Date(currentDate);
-//   endCheckPeriodTime.setHours(11, 0, 30, 0);
-//   const isCheckBotTime =
-//     startCheckPeriodTime < currentDate && currentDate <= endCheckPeriodTime;
+// Функция - проверка работоспособности бота в 11 часов
+export const checkAvailabilityBotTime = (
+  date,
+  startBotDate,
+  startBotTime,
+  bot,
+  ownerID,
+  users,
+) => {
+  setInterval(() => {
+    const currentHour = new Date().getHours();
 
-//   if (isCheckBotTime) {
-//     workDaysCount += 1;
-//     bot.telegram.sendMessage(
-//       ownerID,
-//       `Бот работает с ${startBotDate} ${startBotTime}, дней работы: ${workDaysCount}. Список ждунов: ${getUsersList()}`
-//     );
-//   }
-// };
+    if (currentHour >= 12 && currentHour < 13) {
+      bot.telegram.sendMessage(
+        ownerID,
+        `Бот работает с ${startBotDate} ${startBotTime}, дней работы: ${getWorkDaysCount(date)}. Список ждунов: ${getUsersList(users)}`,
+      );
+    }
+  }, 3600000); // раз в ~час
+};
