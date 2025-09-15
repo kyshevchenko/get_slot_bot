@@ -2,8 +2,8 @@ import { Telegraf } from 'telegraf';
 import dotenv from 'dotenv';
 
 import { getWorkDaysCount, checkAvailabilityBotTime } from './utils.js';
-// import checkIceRincSlot from './sites/ice-rinc-checker.js';
-import checkClimblingSlots from './sites/climbing-checker.js';
+// import checkClimblingSlots from './sites/climbing-checker.js';
+import monitorTickets from './sites/monitorTickets.js';
 
 dotenv.config();
 
@@ -59,7 +59,7 @@ bot.command('stop', (ctx) => {
 });
 
 // Проверка слотов на складором
-checkClimblingSlots(bot, ownerID);
+// checkClimblingSlots(bot, ownerID);
 
 // Запускаем проверку слотов на катке
 // checkIceRincSlot(users, bot, ownerID);
@@ -78,3 +78,6 @@ checkAvailabilityBotTime(
 );
 
 bot.launch();
+
+// Мониторинг билетов на волну
+monitorTickets(bot, ownerID, 'https://russpass.ru/excursion/68872317fc46d805f33c4826')
