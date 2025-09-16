@@ -4,7 +4,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
   console.log('🎫 Запуск мониторинга регистрации...');
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
