@@ -35,11 +35,11 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         // ждем секунду ответа с бэка и отработки скриптов
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        console.log('🔍 Ищем временные слоты на странице"');
+        console.log('🔍 Ищем элемент с filterButtonPopoverNota...');
 
-        const timeInputText = await page.evaluate(() => {
-          // Ищем инпут с временными слотами
-          const elements = Array.from(document.querySelectorAll('*')).filter(
+        const popoverContent = await page.evaluate(async () => {
+          // Ищем ОДИН элемент с filterButtonPopoverNota
+          const filterButton = Array.from(document.querySelectorAll('*')).find(
             (el) => {
               const className = el.className || '';
               return (
@@ -49,17 +49,43 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
             },
           );
 
-          if (elements.length > 0) {
-            return elements[0].textContent?.trim() || '';
+          if (filterButton) {
+            // Кликаем на элемент
+            filterButton.click();
+
+            // Ждем появления модалки (даем время на анимацию)
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Ищем элемент с filterSelectedTime
+            const popoverElements = Array.from(
+              document.querySelectorAll('*'),
+            ).filter((el) => {
+              const className = el.className || '';
+              return (
+                typeof className === 'string' &&
+                className.includes('FilterSelectTime_item')
+              );
+            });
+
+            if (popoverElements.length > 0) {
+              // return popoverElement.textContent?.trim() || '';
+              const combinedText = popoverElements
+                .map((el) => el.textContent?.trim() || '')
+                .filter((text) => text !== '')
+                .join('\n');
+
+              return combinedText;
+            }
           }
 
           return '';
         });
 
-        if (timeInputText !== 'Время') {
-          notifyUsers(ownerID, bot, siteURL, timeInputText);
+        if (popoverContent) {
+          console.log('📋 Текст из popoverContent:', popoverContent);
+          await notifyUsers(ownerID, bot, siteURL, popoverContent);
         } else {
-          console.log('Пока не появились свободные слоты');
+          console.log('❌ Не удалось найти или открыть popover');
         }
 
         console.log('🔄 Обновляем страницу...');
@@ -82,13 +108,13 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
   }
 };
 
-async function notifyUsers(ownerID, bot, siteURL, timeInputText) {
+async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
   console.log('📤 Отправляем уведомление...');
 
   try {
     await bot.telegram.sendMessage(
       ownerID,
-      `${timeInputText}\n\n🎉 РЕГИСТРАЦИЯ ОТКРЫТА! 🎉\n\nСкорее переходи: ${siteURL}`,
+      `${popoverContent}\n\n🎉 НАЙДЕНЫ СВОБОДНЫЕ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
     );
 
     console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
