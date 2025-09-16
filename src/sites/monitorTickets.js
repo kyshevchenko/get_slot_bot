@@ -35,121 +35,31 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         // ждем секунду ответа с бэка и отработки скриптов
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        console.log('🔍 Ищем форму с классом "activityDetail_filters..."');
-        const buttonInfo = await page.evaluate(() => {
-          // Ищем ПЕРВУЮ форму/контейнер с классом, который содержит "activityDetail_filters"
-          const forms = Array.from(document.querySelectorAll('div')).filter(
-            (element) => {
-              const className = element.className || '';
+        console.log('🔍 Ищем временные слоты на странице"');
+
+        const timeInputText = await page.evaluate(() => {
+          // Ищем инпут с временными слотами
+          const elements = Array.from(document.querySelectorAll('*')).filter(
+            (el) => {
+              const className = el.className || '';
               return (
                 typeof className === 'string' &&
-                className.includes('activityDetail_filters')
+                className.includes('filterButtonPopoverNota')
               );
             },
           );
 
-          if (forms.length > 0) {
-            const form = forms[0]; // Берем первую найденную форму
-
-            // Ищем кнопку "Зарегистрироваться" только внутри этой формы
-            const buttons = form.querySelectorAll('button');
-
-            for (const button of buttons) {
-              const text = button.textContent?.trim() || '';
-              if (text === 'Зарегистрироваться') {
-                // Получаем ВЫЧИСЛЕННЫЙ цвет после всех скриптов
-                const computedColor =
-                  window.getComputedStyle(button).backgroundColor;
-                console.log(
-                  'button computed backgroundColor === ',
-                  computedColor,
-                );
-
-                const hasDisabledAttr = button.hasAttribute('disabled');
-                console.log(
-                  'button.hasAttribute("disabled") === ',
-                  hasDisabledAttr,
-                );
-                console.log(' button.disabled === ', button.disabled);
-
-                const isDisabled =
-                  button.disabled ||
-                  hasDisabledAttr ||
-                  button.getAttribute('aria-disabled') === 'true' ||
-                  button.classList.contains('disabled') ||
-                  button.style.pointerEvents === 'none' ||
-                  button.style.opacity === '0.5';
-
-                return {
-                  exists: true,
-                  disabled: isDisabled,
-                  text: text,
-                  color: computedColor,
-                  formFound: true,
-                };
-              }
-            }
-            console.log(
-              '❌ Кнопка "Зарегистрироваться" не найдена внутри формы',
-            );
-          } else {
-            console.log('❌ Форма с activityDetail_filters не найдена');
+          if (elements.length > 0) {
+            return elements[0].textContent?.trim() || '';
           }
 
-          return { exists: false, disabled: true, text: '', formFound: false };
+          return '';
         });
 
-        if (buttonInfo.exists) {
-          console.log(
-            `🔍 Найдена кнопка: "${buttonInfo.text}". 🎨 Цвет: ${buttonInfo.color}. 📋 Состояние disabled: ${buttonInfo.disabled}`,
-          );
-
-          if (!buttonInfo.disabled) {
-            console.log('🎉 Кнопка АКТИВНА! Регистрация открыта!');
-            await notifyUsers(ownerID, bot, siteURL);
-
-            try {
-              // Кликаем через evaluate для точности
-              await page.evaluate(() => {
-                // Ищем первую форму с activityDetail_filters
-                const forms = Array.from(document.querySelectorAll('*')).filter(
-                  (element) => {
-                    const className = element.className || '';
-                    return (
-                      typeof className === 'string' &&
-                      className.includes('activityDetail_filters')
-                    );
-                  },
-                );
-
-                if (forms.length > 0) {
-                  const form = forms[0];
-                  const buttons = form.querySelectorAll('button');
-                  for (const button of buttons) {
-                    if (
-                      button.textContent?.trim() === 'Зарегистрироваться' &&
-                      !button.disabled
-                    ) {
-                      button.click();
-                      return;
-                    }
-                  }
-                }
-              });
-              console.log('✅ Клик по кнопке выполнен');
-            } catch (clickError) {
-              console.log(
-                '⚠️ Не удалось кликнуть по кнопке:',
-                clickError.message,
-              );
-            }
-          } else {
-            console.log('⏸️ Кнопка заблокирована, продолжаем мониторинг...');
-          }
+        if (timeInputText !== 'Время') {
+          notifyUsers(ownerID, bot, siteURL, timeInputText);
         } else {
-          console.log(
-            '❌ Кнопка "Зарегистрироваться" не найдена в целевой форме',
-          );
+          console.log('Пока не появились свободные слоты');
         }
 
         console.log('🔄 Обновляем страницу...');
@@ -172,13 +82,13 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
   }
 };
 
-async function notifyUsers(ownerID, bot, siteURL) {
+async function notifyUsers(ownerID, bot, siteURL, timeInputText) {
   console.log('📤 Отправляем уведомление...');
 
   try {
     await bot.telegram.sendMessage(
       ownerID,
-      `🎉 РЕГИСТРАЦИЯ ОТКРЫТА! 🎉\n\nКнопка "Зарегистрироваться" стала активной!\n\nСкорее переходи: ${siteURL}`,
+      `${timeInputText}\n\n🎉 РЕГИСТРАЦИЯ ОТКРЫТА! 🎉\n\nСкорее переходи: ${siteURL}`,
     );
 
     console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
