@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 
 export const monitorTickets = async (bot, ownerID, siteURL) => {
-  console.log('🎫 Запуск мониторинга регистрации...');
+  console.log('🎫 Start monitoring...');
 
   const browser = await puppeteer.launch({
     headless: "new",
@@ -22,11 +22,11 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
       try {
         const randomDelay = Math.random() * 8000 + 2000;
         console.log(
-          `⏰ Следующая проверка через: ${(randomDelay / 1000).toFixed(2)} сек`,
+          `⏰ Next check: ${(randomDelay / 1000).toFixed(2)} сек`,
         );
         await new Promise((resolve) => setTimeout(resolve, randomDelay));
 
-        console.log('🌐 Загружаем страницу...');
+        console.log('🌐 Download page...');
         await page.goto(siteURL, {
           waitUntil: 'load',
           timeout: 30000,
@@ -35,7 +35,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         // ждем секунду ответа с бэка и отработки скриптов
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        console.log('🔍 Ищем элемент с filterButtonPopoverNota...');
+        console.log('🔍 Searching for element with filterButtonPopoverNota...');
 
         const popoverContent = await page.evaluate(async () => {
           // Ищем ОДИН элемент с filterButtonPopoverNota
@@ -68,7 +68,6 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
             });
 
             if (popoverElements.length > 0) {
-              // return popoverElement.textContent?.trim() || '';
               const combinedText = popoverElements
                 .map((el) => el.textContent?.trim() || '')
                 .filter((text) => text !== '')
@@ -82,26 +81,26 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         });
 
         if (popoverContent) {
-          console.log('📋 Текст из popoverContent:', popoverContent);
+          console.log('📋 Text from popoverContent:', popoverContent);
           await notifyUsers(ownerID, bot, siteURL, popoverContent);
         } else {
-          console.log('❌ Не удалось найти или открыть popover');
+          console.log('❌ Popover not found');
         }
 
-        console.log('🔄 Обновляем страницу...');
+        console.log('🔄 Reload page...');
       } catch (error) {
         if (error.name === 'TimeoutError') {
-          console.log('⏰ Таймаут загрузки страницы, пробуем снова...');
+          console.log('⏰ Page laoding timeout, page reload...');
         } else {
-          console.error('💥 Ошибка при загрузке страницы:', error.message);
+          console.error('💥 Error while page loading', error.message);
         }
       }
     }
   } catch (error) {
-    console.error('💥 Критическая ошибка:', error.message);
+    console.error('💥 Critical error:', error.message);
     await bot.telegram.sendMessage(
       ownerID,
-      `❌ Ошибка в работе мониторинга: ${error.message}`,
+      `❌ Monitoring error: ${error.message}`,
     );
   } finally {
     await browser.close();
@@ -109,7 +108,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
 };
 
 async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
-  console.log('📤 Отправляем уведомление...');
+  console.log('📤 Sending notify...');
 
   try {
     await bot.telegram.sendMessage(
@@ -117,9 +116,9 @@ async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
       `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
     );
 
-    console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
+    console.log(`✅ Notify sended to user: ${ownerID}`);
   } catch (error) {
-    console.error(`❌ Ошибка отправки:`, error.message);
+    console.error(`❌ Send error:`, error.message);
   }
 }
 
