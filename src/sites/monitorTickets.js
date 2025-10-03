@@ -1,10 +1,10 @@
 import puppeteer from 'puppeteer';
 
 export const monitorTickets = async (bot, ownerID, siteURL) => {
-  console.log('🎫 Start monitoring...');
+  console.log('🎫 Запуск мониторинга регистрации...');
 
   const browser = await puppeteer.launch({
-    headless: "new",
+    headless: 'new',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -20,13 +20,13 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
 
     while (true) {
       try {
-        const randomDelay = Math.random() * 8000 + 2000;
+        const randomDelay = Math.random() * 3000 + 2000;
         console.log(
-          `⏰ Next check: ${(randomDelay / 1000).toFixed(2)} сек`,
+          `⏰ Следующая проверка через: ${(randomDelay / 1000).toFixed(2)} сек`,
         );
         await new Promise((resolve) => setTimeout(resolve, randomDelay));
 
-        console.log('🌐 Download page...');
+        console.log('🌐 Загружаем страницу...');
         await page.goto(siteURL, {
           waitUntil: 'load',
           timeout: 30000,
@@ -35,7 +35,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         // ждем секунду ответа с бэка и отработки скриптов
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        console.log('🔍 Searching for element with filterButtonPopoverNota...');
+        console.log('🔍 Ищем элемент с filterButtonPopoverNota...');
 
         const popoverContent = await page.evaluate(async () => {
           // Ищем ОДИН элемент с filterButtonPopoverNota
@@ -68,6 +68,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
             });
 
             if (popoverElements.length > 0) {
+              // return popoverElement.textContent?.trim() || '';
               const combinedText = popoverElements
                 .map((el) => el.textContent?.trim() || '')
                 .filter((text) => text !== '')
@@ -81,26 +82,29 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
         });
 
         if (popoverContent) {
-          console.log('📋 Text from popoverContent:', popoverContent);
+          console.log('📋 Текст из popoverContent:', popoverContent);
           await notifyUsers(ownerID, bot, siteURL, popoverContent);
+
+          // задержка 1 минута после уведомления о появивишихся слотах
+          await new Promise((resolve) => setTimeout(resolve, 60000));
         } else {
-          console.log('❌ Popover not found');
+          console.log('❌ Не удалось найти или открыть popover');
         }
 
-        console.log('🔄 Reload page...');
+        console.log('🔄 Обновляем страницу...');
       } catch (error) {
         if (error.name === 'TimeoutError') {
-          console.log('⏰ Page laoding timeout, page reload...');
+          console.log('⏰ Таймаут загрузки страницы, пробуем снова...');
         } else {
-          console.error('💥 Error while page loading', error.message);
+          console.error('💥 Ошибка при загрузке страницы:', error.message);
         }
       }
     }
   } catch (error) {
-    console.error('💥 Critical error:', error.message);
+    console.error('💥 Критическая ошибка:', error.message);
     await bot.telegram.sendMessage(
       ownerID,
-      `❌ Monitoring error: ${error.message}`,
+      `❌ Ошибка в работе мониторинга: ${error.message}`,
     );
   } finally {
     await browser.close();
@@ -108,17 +112,22 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
 };
 
 async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
-  console.log('📤 Sending notify...');
+  console.log('📤 Отправляем уведомление...');
 
   try {
+    await bot.telegram.sendMessage(
+      81480497, // артем
+      `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
+    );
+
     await bot.telegram.sendMessage(
       ownerID,
       `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
     );
 
-    console.log(`✅ Notify sended to user: ${ownerID}`);
+    console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
   } catch (error) {
-    console.error(`❌ Send error:`, error.message);
+    console.error(`❌ Ошибка отправки:`, error.message);
   }
 }
 
