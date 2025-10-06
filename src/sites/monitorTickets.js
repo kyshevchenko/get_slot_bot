@@ -119,6 +119,8 @@ async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
       81480497, // артем
       `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
     );
+        console.log(`✅ Уведомление отправлено Артему`);
+
 
     await bot.telegram.sendMessage(
       ownerID,
