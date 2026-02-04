@@ -69,8 +69,7 @@ export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
 
           await notifyUsers(ownerID, bot, siteURL, slotsCountMessage);
 
-          // задержка 1 минута после уведомления о появивишихся слотах
-          await new Promise((resolve) => setTimeout(resolve, 60000));
+          await new Promise((resolve) => setTimeout(resolve, 600000)); // задержка 10 минут после уведомления о появивишихся слотах
         } else {
           console.log('❌ Слотов пока нет');
         }
