@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import { notifyUsers } from '../utils.js';
 
 export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
-  console.log('🎫 Запуск мониторинга регистрации...');
+  console.log('🎫 Starting ticket monitoring...');
 
   const browser = await puppeteer.launch({
     // headless: false,
@@ -24,11 +24,11 @@ export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
       try {
         const randomDelay = Math.random() * 1000 + 8000; // около 2-10 секунд
         console.log(
-          `⏰ Следующая проверка через: ${(randomDelay / 1000).toFixed(2)} сек`,
+          `⏰ Next check after: ${(randomDelay / 1000).toFixed(2)} seconds`,
         );
         await new Promise((resolve) => setTimeout(resolve, randomDelay));
 
-        console.log('🌐 Загружаем страницу...');
+        console.log('🌐 Loading page...');
         await page.goto(siteURL, {
           waitUntil: 'load',
           timeout: 30000,
@@ -36,14 +36,12 @@ export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
 
         await new Promise((resolve) => setTimeout(resolve, 1000)); // ждем секунду ответа с бэка и отработки скриптов
 
-        console.log('🔍 Смотрим есть ли слоты');
+        console.log('🔍 Searching for available slots...');
 
         const availableSlotsCount = await page.evaluate(async () => {
           const slotFields = Array.from(
             document.querySelectorAll('.slot__limit'),
           );
-
-          console.log('slotFields: ', slotFields);
 
           // Найти первый элемент, у которого есть дочерний <strong> с числом > 1
           return slotFields.find((el) => {
@@ -56,7 +54,6 @@ export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
             const textContent = strongElement.textContent?.trim() || '';
 
             const numberValue = Number(textContent);
-            console.log('количество слотов: ', numberValue);
 
             // Проверяем, что это корректное число и оно > 1
             return !isNaN(numberValue) && numberValue > 1;
@@ -64,30 +61,30 @@ export const snowVGTMonitorickets = async (bot, ownerID, siteURL) => {
         });
 
         if (availableSlotsCount) {
-          console.log('📋 availableSlotsCount', availableSlotsCount);
+          console.log('📋 availableSlotsCount: ', availableSlotsCount);
           const slotsCountMessage = `${availableSlotsCount} слотов найдено.`;
 
           await notifyUsers(ownerID, bot, siteURL, slotsCountMessage);
 
           await new Promise((resolve) => setTimeout(resolve, 600000)); // задержка 10 минут после уведомления о появивишихся слотах
         } else {
-          console.log('❌ Слотов пока нет');
+          console.log('❌ Slots not found');
         }
 
-        console.log('🔄 Обновляем страницу...');
+        console.log('🔄 Updating page...');
       } catch (error) {
         if (error.name === 'TimeoutError') {
-          console.log('⏰ Таймаут загрузки страницы, пробуем снова...');
+          console.log('⏰ Timeout error download page, repeate again...');
         } else {
-          console.error('💥 Ошибка при загрузке страницы:', error.message);
+          console.error('💥 Download error page:', error.message);
         }
       }
     }
   } catch (error) {
-    console.error('💥 Критическая ошибка:', error.message);
+    console.error('💥 Critical error:', error.message);
     await bot.telegram.sendMessage(
       ownerID,
-      `❌ Ошибка в работе мониторинга: ${error.message}`,
+      `❌ Monitoring error: ${error.message}`,
     );
   } finally {
     await browser.close();
