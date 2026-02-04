@@ -1,9 +1,11 @@
 import puppeteer from 'puppeteer';
+import { notifyUsers } from '../utils';
 
-export const monitorTickets = async (bot, ownerID, siteURL) => {
+export const waveMonitorTickets = async (bot, ownerID, siteURL) => {
   console.log('🎫 Запуск мониторинга регистрации...');
 
   const browser = await puppeteer.launch({
+    // headless: false,
     headless: 'new',
     args: [
       '--no-sandbox',
@@ -20,7 +22,7 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
 
     while (true) {
       try {
-        const randomDelay = Math.random() * 3000 + 2000;
+        const randomDelay = Math.random() * 1000 + 2000;
         console.log(
           `⏰ Следующая проверка через: ${(randomDelay / 1000).toFixed(2)} сек`,
         );
@@ -111,26 +113,4 @@ export const monitorTickets = async (bot, ownerID, siteURL) => {
   }
 };
 
-async function notifyUsers(ownerID, bot, siteURL, popoverContent) {
-  console.log('📤 Отправляем уведомление...');
-
-  try {
-    await bot.telegram.sendMessage(
-      81480497, // артем
-      `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
-    );
-        console.log(`✅ Уведомление отправлено Артему`);
-
-
-    await bot.telegram.sendMessage(
-      ownerID,
-      `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
-    );
-
-    console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
-  } catch (error) {
-    console.error(`❌ Ошибка отправки:`, error.message);
-  }
-}
-
-export default monitorTickets;
+export default waveMonitorTickets;

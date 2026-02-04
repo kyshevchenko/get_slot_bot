@@ -30,3 +30,24 @@ export const checkAvailabilityBotTime = (
     }
   }, 3600000); // раз в ~час
 };
+
+export const notifyUsers = async (ownerID, bot, siteURL, popoverContent) => {
+  console.log('📤 Отправляем уведомление...');
+
+  try {
+    // await bot.telegram.sendMessage(
+    //   81480497, // артем
+    //   `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
+    // );
+    // console.log(`✅ Уведомление отправлено Артему`);
+
+    await bot.telegram.sendMessage(
+      ownerID,
+      `${popoverContent}\n\n🎉 НАЙДЕНЫ СЛОТЫ! 🎉\n\nСкорее переходи: ${siteURL}`,
+    );
+
+    console.log(`✅ Уведомление отправлено пользователю: ${ownerID}`);
+  } catch (error) {
+    console.error(`❌ Ошибка отправки:`, error.message);
+  }
+};

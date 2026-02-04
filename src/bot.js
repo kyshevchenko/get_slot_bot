@@ -3,12 +3,15 @@ import dotenv from 'dotenv';
 
 import { getWorkDaysCount, checkAvailabilityBotTime } from './utils.js';
 // import checkClimblingSlots from './sites/climbing-checker.js';
-import monitorTickets from './sites/monitorTickets.js';
+// import waveMonitorTickets from './sites/wave-strogino-tickets.js';
+import snowVGTMonitorickets from './sites/snowboard-vg-tickets.js';
 
 dotenv.config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const ownerID = process.env.OWNER_ID;
+// const waveStroginoSiteUrl = process.env.WAVE_STROGINO;
+const snowVGSiteUrl = process.env.SNOW_VG_SITE;
 
 bot.telegram.sendMessage(ownerID, 'Бот начал работать.');
 
@@ -58,12 +61,6 @@ bot.command('stop', (ctx) => {
   }
 });
 
-// Проверка слотов на складором
-// checkClimblingSlots(bot, ownerID);
-
-// Запускаем проверку слотов на катке
-// checkIceRincSlot(users, bot, ownerID);
-
 console.log(
   `Запустили проверку доступности слотов в ${startDateFormatted} ${startTimeFormatted}...`,
 );
@@ -79,5 +76,14 @@ checkAvailabilityBotTime(
 
 bot.launch();
 
+// Проверка слотов на складором
+// checkClimblingSlots(bot, ownerID);
+
+// Запускаем проверку слотов на катке
+// checkIceRincSlot(users, bot, ownerID);
+
 // Мониторинг билетов на волну
-monitorTickets(bot, ownerID, 'https://russpass.ru/excursion/68872317fc46d805f33c4826')
+// waveMonitorTickets(bot, ownerID, waveStroginoSiteUrl);
+
+// Мониторинг билетов сноубород ВГ
+snowVGTMonitorickets(bot, ownerID, snowVGSiteUrl);
